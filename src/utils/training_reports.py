@@ -49,15 +49,6 @@ def compute_domain_accuracies(trainer, train_loader, val_loader):
 
 
 def save_accuracy_table(domain_accuracies, filename="tables/accuracy_table.csv"):
-    """
-    domain_accuracies: dict like
-        {
-            "animal":      {"train": 0.864, "val": 0.610},
-            "music":       {"train": 0.886, "val": 0.883},
-            "soundscapes": {"train": 0.821, "val": 0.787},
-            "speech":      {"train": 0.941, "val": 0.810},
-        }
-    """
     rows = []
     for domain, acc in domain_accuracies.items():
         rows.append({"domain": domain, "train_acc": acc["train"], "val_acc": acc["val"]})
