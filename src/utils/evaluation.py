@@ -97,7 +97,7 @@ def save_accuracy_curve(variable_train, variable_val, title="Train vs Val Accura
 def compute_classification_reports(trainer, splits):
     """
     splits: list of (split_name, loader) tuples
-    Returns: {"overall": report, "domains": {"domain": report}}
+    
     """
 
     results = {}
