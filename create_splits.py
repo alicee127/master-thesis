@@ -29,16 +29,16 @@ for filepath in pt_files:
     (emb_train, labels_train, groups_train), (emb_val, labels_val, groups_val), (emb_test, labels_test, groups_test) = train_val_test_split(embeddings, labels, groups=groups_to_use)
 
     splits = {
-        "train":  (emb_train, labels_train),
-        "val": (emb_val, labels_val),
-        "test": (emb_test, labels_test)
+        "train":  (emb_train, labels_train, groups_train),
+        "val": (emb_val, labels_val, groups_val),
+        "test": (emb_test, labels_test, groups_test)
     }
 
     name_no_ext, ext = os.path.splitext(filename)
 
-    for split_name, (emb, lab) in splits.items():
+    for split_name, (emb, lab, group) in splits.items():
         out_filename = f"{name_no_ext}_{split_name}{ext}"
         out_path = os.path.join(SPLIT_DIRS[split_name], out_filename)
-        torch.save({"embedding": emb, "label": lab}, out_path)
+        torch.save({"embedding": emb, "label": lab, "group": group}, out_path)
         print(f"Saved {split_name} split for '{domain_name}' -> {out_path} ({emb.shape[0]} samples)")
 
