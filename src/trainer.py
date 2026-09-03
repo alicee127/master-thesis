@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import WeightedRandomSampler, DataLoader
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import numpy as np
 import copy
 from tqdm.auto import tqdm
+from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 class Trainer:
 
@@ -25,6 +27,7 @@ class Trainer:
         param_groups = [{"params": self.projectors.parameters(), "weight_decay": projector_weight_decay},
                         {"params": self.classifier.parameters(), "weight_decay": classifier_weight_decay}]
         self.optimizer = torch.optim.Adam(param_groups, lr)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, "min")
 
 
     def create_weighted_sampler(self, domains, labels, alpha = 0.5):
@@ -88,8 +91,8 @@ class Trainer:
         return epoch_loss, all_logits, all_labels
 
     def train_one_epoch(self, train_loader):
-        epoch_loss, _, _ = self._run_epoch(train_loader, train=True)
-        return epoch_loss
+        epoch_loss, logits, labels = self._run_epoch(train_loader, train=True)
+        return epoch_loss, logits, labels
 
 
     def evaluate(self, data_loader):
@@ -101,16 +104,29 @@ class Trainer:
         best_state = None
         epochs_without_improvement = 0
 
-        history = {"train_loss": [], "val_loss": []}
+        history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": [], "train_bal_acc": [], "val_bal_acc": []}
 
         epoch_iterator  = tqdm(range(max_epochs), desc = "Training")
 
         for epoch in epoch_iterator:
-            train_loss = self.train_one_epoch(train_loader)
-            val_loss, _, _ = self.evaluate(val_loader)
+            train_loss, train_logits, train_labels = self.train_one_epoch(train_loader)
+            val_loss, val_logits, val_labels = self.evaluate(val_loader)
+
+            train_preds = (torch.sigmoid(train_logits) > 0.5).long()
+            val_preds = (torch.sigmoid(val_logits) > 0.5).long()
+
+            train_acc = accuracy_score(train_labels.long().numpy(), train_preds.numpy())
+            val_acc = accuracy_score(val_labels.long().numpy(), val_preds.numpy())
+
+            train_bal_acc = balanced_accuracy_score(train_labels.long().numpy(), train_preds.numpy())
+            val_bal_acc = balanced_accuracy_score(val_labels.long().numpy(), val_preds.numpy())
 
             history["train_loss"].append(train_loss)
             history["val_loss"].append(val_loss)
+            history["train_acc"].append(train_acc)
+            history["val_acc"].append(val_acc)
+            history["train_bal_acc"].append(train_bal_acc)
+            history["val_bal_acc"].append(val_bal_acc)
 
 
             epoch_iterator.set_postfix(train_loss=f"{train_loss:.4f}", val_loss=f"{val_loss:.4f}")
@@ -124,7 +140,6 @@ class Trainer:
                 epochs_without_improvement = 0
                 best_state = {"projectors_state_dict": copy.deepcopy(self.projectors.state_dict()),
                               "classifier_state_dict": copy.deepcopy(self.classifier.state_dict())}
-
             else:
                 epochs_without_improvement += 1
 
@@ -134,11 +149,14 @@ class Trainer:
                 epoch_iterator.close()
                 break
 
+            self.scheduler.step(val_loss)
+
         if best_state is not None:
             self.projectors.load_state_dict(best_state["projectors_state_dict"])
             self.classifier.load_state_dict(best_state["classifier_state_dict"])
 
         return history
+    
     
 
     

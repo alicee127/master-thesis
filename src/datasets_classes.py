@@ -92,7 +92,8 @@ class SpeechDataset(BaseDataset):
         super().__init__(target_sr)
     
     def load_data(self):
-        splits = get_dataset_split_names("amu-cai/CAMEO")
+        #splits = get_dataset_split_names("amu-cai/CAMEO")
+        splits = ["crema_d", "cafe", "emozionalmente", "enterface", "oreau", "ravdess", "subesco"]
         all_splits = [load_dataset("amu-cai/CAMEO", split = s) for s in splits]
         combined = concatenate_datasets(all_splits)
         combined = combined.cast_column("audio", Audio(decode=False))
@@ -269,11 +270,12 @@ class MultiDomainDataset(Dataset):
             filename = os.path.basename(filepath)
             domain_name, _ = filename.split("_", 1)
 
-            data = torch.load(filepath)
+            data = torch.load(filepath, weights_only=False)
             embeddings = data["embedding"]
             labels = data["label"]
+            groups = data["group"]
 
-            self.domain_data[domain_name] = {"embedding": embeddings, "label": labels}
+            self.domain_data[domain_name] = {"embedding": embeddings, "label": labels, "group": groups}
 
             n_samples = embeddings.shape[0]
             self.index_map.extend([(domain_name, i) for i in range(n_samples)])
@@ -294,6 +296,7 @@ class MultiDomainDataset(Dataset):
         domain_name, local_idx = self.index_map[idx]
         embedding = self.domain_data[domain_name]["embedding"][local_idx]
         label = self.domain_data[domain_name]["label"][local_idx]
+        #group = self.domain_data[domain_name]["group"][local_idx]
 
         return embedding, label, domain_name
 
