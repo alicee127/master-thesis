@@ -9,6 +9,7 @@ import glob
 import numpy as np
 from datasets import load_dataset, get_dataset_split_names, concatenate_datasets, Audio
 from src.utils.caching import load_embeddings
+from src.config import NATIVE_MODEL_BY_DOMAIN
 
 
 class BaseDataset(Dataset):
@@ -260,7 +261,7 @@ class SoundscapesDataset(BaseDataset):
 
 class MultiDomainDataset(Dataset):
 
-    def __init__(self, embeddings_dir):
+    def __init__(self, embeddings_dir, model_filter=None, native_only=False):
         self.domain_data = {}
         self.index_map = []
 
@@ -268,7 +269,14 @@ class MultiDomainDataset(Dataset):
 
         for filepath in pt_files:
             filename = os.path.basename(filepath)
-            domain_name, _ = filename.split("_", 1)
+            name_no_ext, _ = os.path.splitext(filename)
+            domain_name, model_name, _split_name = name_no_ext.split("_", 2)
+
+            if native_only and model_name != NATIVE_MODEL_BY_DOMAIN.get(domain_name):
+                continue
+
+            if model_filter is not None and model_name != model_filter:
+                continue
 
             data = torch.load(filepath, weights_only=False)
             embeddings = data["embedding"]
