@@ -19,7 +19,8 @@ pt_files = glob.glob(os.path.join(EMBEDDINGS_DIR, "*.pt"))
 
 for filepath in pt_files:
     filename = os.path.basename(filepath)
-    domain_name, _ = filename.split("_", 1)
+    name_no_ext, ext = os.path.splitext(filename)
+    domain_name, model_name = name_no_ext.split("_", 1)
 
     embeddings, labels, groups = load_embeddings(filepath)
 
@@ -34,11 +35,10 @@ for filepath in pt_files:
         "test": (emb_test, labels_test, groups_test)
     }
 
-    name_no_ext, ext = os.path.splitext(filename)
 
     for split_name, (emb, lab, group) in splits.items():
-        out_filename = f"{name_no_ext}_{split_name}{ext}"
+        out_filename = f"{domain_name}_{model_name}_{split_name}{ext}"
         out_path = os.path.join(SPLIT_DIRS[split_name], out_filename)
         torch.save({"embedding": emb, "label": lab, "group": group}, out_path)
-        print(f"Saved {split_name} split for '{domain_name}' -> {out_path} ({emb.shape[0]} samples)")
+        print(f"Saved {split_name} split for '{domain_name}' ({model_name}) -> {out_path} ({emb.shape[0]} samples)")
 

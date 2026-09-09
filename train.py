@@ -6,8 +6,10 @@ import pickle
 
 from src.datasets_classes import MultiDomainDataset
 from src.utils.evaluation import (compute_domain_accuracies, compute_domain_balanced_accuracies, compute_classification_reports,
-                                  save_accuracy_table, save_loss_curve, save_accuracy_curve, save_confusion_matrices)
+                                  save_accuracy_table, save_loss_curve, save_accuracy_curve, save_confusion_matrices,
+                                  save_combined_confusion_matrix, plot_domain_metric_bar)
 from src.utils.train_utils import run_training
+from src.config import MODEL_OUTPUT_DIM
 
 SEED = 42
 random.seed(SEED)
@@ -17,10 +19,10 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
 
-train_dataset = MultiDomainDataset("outputs/embeddings/train")
-val_dataset = MultiDomainDataset("outputs/embeddings/validation")
+train_dataset = MultiDomainDataset("outputs/embeddings/train", native_only=True)
+val_dataset = MultiDomainDataset("outputs/embeddings/validation", native_only=True)
 
-input_dims = {"speech": 1024, "music": 1024, "animal": 768, "soundscapes": 512}
+input_dims = {"speech": 1024, "music": 1024, "animal": 768, "soundscapes": 512,}
 shared_dim = 64
 
 
@@ -28,7 +30,7 @@ with open("outputs/optuna/best_params.json") as f:
     best_params = json.load(f)
 
 trainer, train_loader, val_loader, history, fitted_pcas = run_training(train_dataset=train_dataset, val_dataset=val_dataset, input_dims=input_dims,
-                                                          shared_dim=shared_dim, max_epochs = 100, patience = 100, SEED = SEED, **best_params)
+                                                          shared_dim=shared_dim, max_epochs = 100, patience = 25, SEED = SEED, **best_params)
 
 with open("outputs/models/fitted_pcas.pkl", "wb") as f:
     pickle.dump(fitted_pcas, f)
@@ -64,4 +66,11 @@ with open("outputs/tables/classification_reports.json", "w") as f:
     json.dump(reports, f, indent=2)
 
 save_confusion_matrices(trainer, splits)
+save_combined_confusion_matrix(trainer=trainer, loader=train_loader, split_name="train") #saving combined (domains) conf. mat. for training set
+save_combined_confusion_matrix(trainer=trainer, loader=val_loader, split_name="val") #saving combined (domains) conf. mat. for validation set
+
+plot_domain_metric_bar(reports=reports, split_name="train", filename= "plots/train_domain_summary.png")
+plot_domain_metric_bar(reports=reports, split_name="val", filename= "plots/val_domain_summary.png")
+
+
 
