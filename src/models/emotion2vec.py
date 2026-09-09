@@ -1,8 +1,13 @@
 import torch
+import torchaudio
+import functools
 from src.models.baseModel import BaseModel
 from funasr import AutoModel
 import soundfile as sf
 import tempfile
+
+_original_load = torchaudio.load
+torchaudio.load = functools.partial(_original_load, backend="soundfile")
 
 class Emotion2VecModel(BaseModel):
     def __init__(self):

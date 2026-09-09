@@ -17,4 +17,3 @@ class BaseModel(nn.Module):
     def encode(self):
         #define in each subclass
         raise NotImplementedError
-    
