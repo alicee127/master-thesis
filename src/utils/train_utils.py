@@ -48,3 +48,22 @@ def run_training(train_dataset, val_dataset, input_dims, shared_dim, hidden_dim,
     history = trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=max_epochs, patience=patience, verbose=False)
 
     return trainer, train_loader, val_loader, history, fitted_pcas
+
+def run_training_no_pca(train_dataset, val_dataset, shared_dim, hidden_dim, lr, dropout, max_epochs = 100, patience = 10, SEED = 42):
+    train_dataset = copy.deepcopy(train_dataset)
+    val_dataset = copy.deepcopy(val_dataset)
+
+    domains = list(train_dataset.domain_data.keys())
+    projectors = nn.ModuleDict({domain: nn.Identity() for domain in domains})
+
+    classifier = Classifier(shared_dim=shared_dim, hidden_dim=hidden_dim, dropout=dropout)
+    trainer = Trainer(projectors, classifier, shared_dim=shared_dim, lr=lr)
+
+    sampler = trainer.create_weighted_sampler(train_dataset.domains, train_dataset.labels, alpha=1)
+    train_loader = DataLoader(train_dataset, sampler = sampler, batch_size= 32, collate_fn=multidomain_collate_fn)
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, collate_fn=multidomain_collate_fn)
+
+
+    history = trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=max_epochs, patience=patience, verbose=False)
+
+    return trainer, train_loader, val_loader, history

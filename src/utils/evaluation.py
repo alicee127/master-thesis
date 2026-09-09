@@ -137,7 +137,7 @@ def save_confusion_matrices(trainer, splits, output_dir = "plots/confusion_matri
         plt.show()
         plt.close()
 
-        for domain in np.unique(all_domains):
+        '''for domain in np.unique(all_domains):
             idx = np.where(all_domains == domain)[0]
             cm = confusion_matrix(labels_flat[idx].numpy(), preds[idx].numpy(), normalize="true")
             sns.heatmap(cm, fmt=".2f", annot=True, cmap="Blues")
@@ -145,5 +145,63 @@ def save_confusion_matrices(trainer, splits, output_dir = "plots/confusion_matri
             plt.xlabel("Predicted")
             plt.ylabel("True")
             plt.savefig(os.path.join(filename, f"{split_name}_{domain}_cf_matrix.png"))
-            plt.show()
-            plt.close()
+            #plt.show()
+            plt.close()'''
+
+def build_summary_table(reports, split_name="test"):
+    rows = []
+    for domain, report in reports[split_name]["domains"].items():
+        rows.append({
+            "domain": domain,
+            "accuracy": report["accuracy"],
+            "balanced_accuracy": report["balanced_accuracy"],
+            "precision_macro": report["macro avg"]["precision"],
+            "recall_macro": report["macro avg"]["recall"],
+            "f1_macro": report["macro avg"]["f1-score"],
+        })
+    df = pd.DataFrame(rows).set_index("domain")
+    return df
+
+def plot_domain_metric_bar(reports, split_name="test", metric="balanced_accuracy", filename="plots/domain_summary_bar.png"):
+    domains = list(reports[split_name]["domains"].keys())
+    values = [reports[split_name]["domains"][d][metric] for d in domains]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.bar(domains, values, color=sns.color_palette("pastel", len(domains)))
+    ax.set_ylabel(metric.replace("_", " ").title())
+    ax.set_ylim(0, 1)
+    ax.set_title(f"{split_name} — {metric.replace('_', ' ')} by domain")
+    for i, v in enumerate(values):
+        ax.text(i, v + 0.02, f"{v:.2f}", ha="center")
+
+    path = os.path.join(OUT_DIR, filename)
+    fig.savefig(path, bbox_inches="tight", dpi=150)
+    plt.show()
+    plt.close(fig)
+
+def save_combined_confusion_matrix(trainer, loader, split_name, output_dir="plots/confusion_matrices"):
+    preds, labels_flat, all_domains = _get_preds_domains(trainer, loader)
+    domains = np.unique(all_domains)
+
+    n = len(domains)
+    n_cols = 2
+    n_rows = int(np.ceil(n / n_cols))
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
+    axes = np.array(axes).reshape(-1)
+
+    for ax, domain in zip(axes, domains):
+        idx = np.where(all_domains == domain)[0]
+        cm = confusion_matrix(labels_flat[idx].numpy(), preds[idx].numpy(), normalize="true")
+        sns.heatmap(cm, fmt=".2f", annot=True, cmap="Blues", ax=ax, cbar=False)
+        ax.set_title(domain)
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("True")
+
+    fig.suptitle(f"{split_name} — confusion matrices by domain")
+    fig.tight_layout()
+
+    path = os.path.join(OUT_DIR, output_dir, f"{split_name}_combined_cf_matrix.png")
+    fig.savefig(path, bbox_inches="tight", dpi=150)
+    plt.show()
+    plt.close(fig)
