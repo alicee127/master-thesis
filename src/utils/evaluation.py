@@ -10,17 +10,29 @@ OUT_DIR = "outputs"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def _get_preds_domains(trainer, loader):
-    """Helper function to extract predicted labels for each domain individually"""
-    _, logits, labels = trainer.evaluate(loader)
+    """
+    Helper function to extract predicted labels for each domain individually
 
-    all_domains = []
+    trainer: Trainer object or None if frame-level experiment
+    loader: DataLoader object for utterance-level, path of .pt files with results for frame-level
+    """
+    if trainer is None: #frame-level
+        data = torch.load(loader, map_location="cpu")
+        logits = data["logits"]
+        labels = data["labels"]
+        all_domains = np.array(data["domains"])
 
-    for _, _, domains in loader:
-        all_domains.extend(domains)
-    all_domains = np.array(all_domains)
+    else: #utterance-level
+        _, logits, labels = trainer.evaluate(loader)
 
-    preds = (torch.sigmoid(logits) > 0.5).long().squeeze(1)
-    labels_flat = labels.long().squeeze(1)
+        all_domains = []
+
+        for _, _, domains in loader:
+            all_domains.extend(domains)
+        all_domains = np.array(all_domains)
+
+    preds = (torch.sigmoid(logits) > 0.5).long().reshape(-1)
+    labels_flat = labels.long().reshape(-1)
 
     return preds, labels_flat, all_domains
 
