@@ -1,11 +1,18 @@
 import torch
 import os
 import glob
+import argparse
+import gc
 
 from src.utils.splitting import train_val_test_split
 from src.utils.caching import load_embeddings
 
-EMBEDDINGS_DIR = "outputs/embeddings"
+parser = argparse.ArgumentParser()
+parser.add_argument("temporal", choices=["frame", "utterance"])
+args = parser.parse_args()
+temporal = args.temporal
+
+EMBEDDINGS_DIR = f"outputs/embeddings/{temporal}"
 SPLIT_DIRS = {
     "train": os.path.join(EMBEDDINGS_DIR, "train"),
     "val": os.path.join(EMBEDDINGS_DIR, "validation"),
@@ -40,5 +47,9 @@ for filepath in pt_files:
         out_filename = f"{domain_name}_{model_name}_{split_name}{ext}"
         out_path = os.path.join(SPLIT_DIRS[split_name], out_filename)
         torch.save({"embedding": emb, "label": lab, "group": group}, out_path)
-        print(f"Saved {split_name} split for '{domain_name}' ({model_name}) -> {out_path} ({emb.shape[0]} samples)")
+        n_samples = len(emb) if isinstance(emb, list) else emb.shape[0]
+        print(f"Saved {split_name} split for '{domain_name}' ({model_name}) -> {out_path} ({n_samples} samples)")
+
+    del embeddings, labels, groups, splits, emb_train, emb_val, emb_test
+    gc.collect()
 

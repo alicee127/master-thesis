@@ -19,8 +19,8 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
 
-train_dataset = MultiDomainDataset("outputs/embeddings/train", native_only=True)
-val_dataset = MultiDomainDataset("outputs/embeddings/validation", native_only=True)
+train_dataset = MultiDomainDataset("outputs/embeddings/utterance/train", native_only=True)
+val_dataset = MultiDomainDataset("outputs/embeddings/utterance/validation", native_only=True)
 
 input_dims = {"speech": 1024, "music": 1024, "animal": 768, "soundscapes": 512,}
 shared_dim = 64
