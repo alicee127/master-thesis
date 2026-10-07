@@ -1,20 +1,11 @@
-MODEL_SR = {
-    "emotion2vec": 16000,
-    "mert": 24000,
-    "aves2": 16000,
-    "clap": 48000
-    }
+import torch
 
-NATIVE_MODEL_BY_DOMAIN = {
-    "speech": "e2v",
-    "music": "mert",
-    "animal": "aves2",
-    "soundscapes": "clap"
-}
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-MODEL_OUTPUT_DIM = {
-    "e2v": 1024,
-    "mert": 1024,
-    "aves2": 768,
-    "clap": 512,
-}
+MODEL_SR = {"emotion2vec": 16000, "mert": 24000, "aves2": 16000, "clap": 48000, "wav2vec": 16000}
+
+NATIVE_MODEL_BY_DOMAIN = {"speech": "e2v", "music": "mert", "animal": "aves2", "soundscapes": "clap"}
+
+MODEL_OUTPUT_DIM = {"e2v": 1024, "mert": 1024, "aves2": 768, "clap": 512}
+
+MODEL_OUTPUT_DIM_FRAME = {"e2v": 1024, "mert": 1024, "aves2": 768, "wav2vec": 768}

@@ -285,7 +285,7 @@ class MultiDomainDataset(Dataset):
 
             self.domain_data[domain_name] = {"embedding": embeddings, "label": labels, "group": groups}
 
-            n_samples = embeddings.shape[0]
+            n_samples = len(embeddings) if isinstance(embeddings, list) else embeddings.shape[0]
             self.index_map.extend([(domain_name, i) for i in range(n_samples)])
 
         self.domains = [d for d, _ in self.index_map]
@@ -304,6 +304,7 @@ class MultiDomainDataset(Dataset):
         domain_name, local_idx = self.index_map[idx]
         embedding = self.domain_data[domain_name]["embedding"][local_idx]
         label = self.domain_data[domain_name]["label"][local_idx]
+        
         #group = self.domain_data[domain_name]["group"][local_idx]
 
         return embedding, label, domain_name
@@ -313,3 +314,11 @@ def multidomain_collate_fn(batch):
     embeddings, labels, domains = zip(*batch)
     labels = torch.tensor(labels)
     return list(embeddings), labels, list(domains)
+
+def frame_multidomain_collate_fn(batch):
+    embeddings, labels, domains = zip(*batch)
+
+    cleaned_embeddings = [emb.squeeze(0) if isinstance(emb, torch.Tensor) and emb.dim()==3 else emb for emb in embeddings]
+
+    labels = torch.tensor(labels)
+    return cleaned_embeddings, labels, list(domains)
