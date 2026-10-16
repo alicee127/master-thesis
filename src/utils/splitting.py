@@ -70,7 +70,7 @@ def train_val_test_split(embeddings, labels, groups = None, n_splits = 10, test_
         labels_train = apply_indices(labels_train_val, train_idx)
 
         emb_val = apply_indices(emb_train_val, val_idx)
-        labels_val = apply_indices(emb_train_val, val_idx)
+        labels_val = apply_indices(labels_train_val, val_idx)
 
         #emb_train, labels_train = emb_train_val[train_idx], labels_train_val[train_idx]
         #emb_val, labels_val = emb_train_val[val_idx], labels_train_val[val_idx]

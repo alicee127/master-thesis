@@ -1,12 +1,14 @@
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch.nn as nn
 import torch
+import numpy as np
 import copy
 from sklearn.decomposition import PCA
 
 from src.datasets_classes import multidomain_collate_fn
 from src.classifier import Classifier
 from src.trainer import Trainer
+from src.projector import Projector
 
 def run_training(train_dataset, val_dataset, input_dims, shared_dim, hidden_dim, lr, dropout, max_epochs = 100, patience = 10, SEED = 42):
 
@@ -67,3 +69,15 @@ def run_training_no_pca(train_dataset, val_dataset, shared_dim, hidden_dim, lr, 
     history = trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=max_epochs, patience=patience, verbose=False)
 
     return trainer, train_loader, val_loader, history
+
+def create_weighted_sampler(domains, labels):
+    combos = [f"{d}_{l.item() if isinstance(l, torch.Tensor) else l}" for d, l in zip(domains,labels)]
+
+    unique_combos, counts = np.unique(combos, return_counts=True)
+    combo_counts = dict(zip(unique_combos, counts))
+
+    sample_weights = [1.0 / combo_counts[c] for c in combos]
+
+    sampler = WeightedRandomSampler(weights=torch.DoubleTensor(sample_weights), num_samples=len(sample_weights), replacement=True)
+
+    return sampler
