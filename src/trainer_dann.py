@@ -38,7 +38,7 @@ class TrainerLSTM:
                 if train:
                     self.optimizer.zero_grad()
         
-                logits, _ = self.model(embeddings, model_names)
+                logits, _, _ = self.model(embeddings, model_names)
                 loss = self.criterion(logits, labels)
         
                 if train:
@@ -157,11 +157,10 @@ class TrainerLSTM:
 
 
 class TrainerDANN(TrainerLSTM):
-    def __init__(self, model, lr=0.001, alpha = 1.0, domain_weight=1.0):
+    def __init__(self, model, lr=0.001, alpha = 1.0):
         super().__init__(model, lr)
 
         self.alpha = alpha
-        self.domain_weight = domain_weight
         self.domain_to_idx = {d: i for i, d in enumerate(NATIVE_MODEL_BY_DOMAIN)}
 
         self.domain_criterion = nn.CrossEntropyLoss() #loss function for the domain discriminator
@@ -188,11 +187,11 @@ class TrainerDANN(TrainerLSTM):
                     logits, domain_logits, _ = self.model(embeddings, model_names, alpha=self.alpha)
                     domain_labels = torch.tensor([self.domain_to_idx[d] for d in domains], device=self.device)
 
-                    #compute loss as emotion classifier loss + domain weight * domain discriminator loss (negative)
-                    #loss = self.criterion(logits, labels) + self.domain_weight * self.domain_criterion(domain_logits, domain_labels)
+                    #compute loss as emotion classifier loss + domain discriminator loss (negative)
+                    #loss = self.criterion(logits, labels) + self.domain_criterion(domain_logits, domain_labels)
                     emotion_loss = self.criterion(logits, labels)
                     domain_loss = self.domain_criterion(domain_logits, domain_labels)
-                    loss = emotion_loss + self.domain_weight * domain_loss
+                    loss = emotion_loss + domain_loss
                     loss.backward()
                     self.optimizer.step()
 
