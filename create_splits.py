@@ -3,8 +3,9 @@ import os
 import glob
 import argparse
 import gc
+import numpy as np
 
-from src.utils.splitting import train_val_test_split
+from src.utils.splitting import train_val_test_split, apply_indices
 from src.utils.caching import load_embeddings
 
 parser = argparse.ArgumentParser()
@@ -34,13 +35,22 @@ for filepath in pt_files:
     has_valid_groups = groups is not None and any(g is not None for g in groups)
     groups_to_use = groups if has_valid_groups else None
 
-    (emb_train, labels_train, groups_train), (emb_val, labels_val, groups_val), (emb_test, labels_test, groups_test) = train_val_test_split(embeddings, labels, groups=groups_to_use)
+    if temporal == "utterance" or groups_to_use == None:
+        (emb_train, labels_train, groups_train), (emb_val, labels_val, groups_val), (emb_test, labels_test, groups_test) = train_val_test_split(embeddings, labels, groups=groups_to_use)
 
-    splits = {
-        "train":  (emb_train, labels_train, groups_train),
-        "val": (emb_val, labels_val, groups_val),
-        "test": (emb_test, labels_test, groups_test)
-    }
+        splits = {
+            "train":  (emb_train, labels_train, groups_train),
+            "val": (emb_val, labels_val, groups_val),
+            "test": (emb_test, labels_test, groups_test)
+        }
+
+    else:
+        splits = {}
+        for split_name, folder in [("train", "train"), ("val", "validation"), ("test", "test")]:
+            utt_path = f"outputs/embeddings/utterance/{folder}/{domain_name}_{model_name}_{split_name}{ext}"
+            utt_groups = torch.load(utt_path, map_location="cpu", weights_only=False)["group"]
+            idx = np.flatnonzero(np.isin(np.array(groups), np.array(utt_groups)))
+            splits[split_name] = (apply_indices(embeddings, idx), apply_indices(labels, idx), apply_indices(groups, idx))
 
 
     for split_name, (emb, lab, group) in splits.items():
@@ -50,6 +60,5 @@ for filepath in pt_files:
         n_samples = len(emb) if isinstance(emb, list) else emb.shape[0]
         print(f"Saved {split_name} split for '{domain_name}' ({model_name}) -> {out_path} ({n_samples} samples)")
 
-    del embeddings, labels, groups, splits, emb_train, emb_val, emb_test
+    del embeddings, labels, groups, splits
     gc.collect()
-
