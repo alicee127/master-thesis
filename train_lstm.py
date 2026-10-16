@@ -19,7 +19,7 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
 
-
+RUN = "frame_bilstm"
 
 train_dataset = MultiDomainDataset("outputs/embeddings/frame/train", native_only = True)
 val_dataset = MultiDomainDataset("outputs/embeddings/frame/validation", native_only=True)
@@ -27,7 +27,7 @@ val_dataset = MultiDomainDataset("outputs/embeddings/frame/validation", native_o
 input_dims = MODEL_OUTPUT_DIM_FRAME
 
 #define the model
-model = AudioEmotionDANN()
+model = AudioEmotionDANN(bilstm=True, dann=False)
 
 trainer = TrainerLSTM(model, lr=0.001)
 
@@ -39,20 +39,20 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, collate_fn=fr
 history = trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=100, patience=10)
 
 #save outputs to files (plots, models, logits)
-plots_output_dir = os.path.join("outputs/plots", "frame")
-os.makedirs(plots_output_dir, exist_ok=True)
+plots_output_dir = os.path.join("outputs/plots", RUN)
+model_output_dir = os.path.join("outputs/models", RUN)
+results_output_dir = os.path.join("outputs/results", RUN)
+for d in (plots_output_dir, model_output_dir, results_output_dir):
+    os.makedirs(d, exist_ok=True)
 
-save_loss_curve(history, title = "Loss curve with LSTM (no DANN)", filename="plots/frame/loss_curve.png")
-save_accuracy_curve(history["train_acc"], history["val_acc"], title="Accuracy curve with LSTM (no DANN)", filename="plots/frame/accuracy_curve.png")
-save_accuracy_curve(history["train_bal_acc"], history["val_bal_acc"], title="Balanced accuracy curve with LSTM (no DANN)", filename="plots/frame/bal_accuracy_curve.png")
+save_loss_curve(history, title = "Loss curve with BiLSTM (no DANN)", filename=f"plots/{RUN}/loss_curve.png")
+save_accuracy_curve(history["train_acc"], history["val_acc"], title="Accuracy curve with BiLSTM (no DANN)", filename=f"plots/{RUN}/accuracy_curve.png")
+save_accuracy_curve(history["train_bal_acc"], history["val_bal_acc"], title="Balanced accuracy curve with BiLSTM (no DANN)", filename=f"plots/{RUN}/bal_accuracy_curve.png")
 
-model_output_dir = os.path.join("outputs/models", "frame")
-os.makedirs(model_output_dir, exist_ok=True)
-
-torch.save(model.state_dict(), "outputs/models/frame/best_model.pt")
+torch.save(model.state_dict(), os.path.join(model_output_dir, "best_model.pt"))
 print(f"Model saved to {model_output_dir}")
 
-save_split_results(trainer, train_loader, "train") #save logits, labels, domains, loss of training set to a .pt file
-save_split_results(trainer, val_loader, "validation") #save logits, labels, domains, loss of validation set to a .pt file
+save_split_results(trainer, train_loader, "train", out_dir = results_output_dir) #save logits, labels, domains, loss of training set to a .pt file
+save_split_results(trainer, val_loader, "validation", out_dir = results_output_dir) #save logits, labels, domains, loss of validation set to a .pt file
 
-torch.save(history, "outputs/results/frame/history.pt")
+torch.save(history, os.path.join(results_output_dir, "history.pt"))

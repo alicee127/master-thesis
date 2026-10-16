@@ -10,6 +10,7 @@ from src.dann_pipeline import AudioEmotionDANN
 from src.config import MODEL_OUTPUT_DIM_FRAME
 from src.utils.evaluation import save_loss_curve, save_accuracy_curve
 from src.utils.results import save_split_results
+from src.utils.train_utils import create_weighted_sampler
 
 SEED = 42
 random.seed(SEED)
@@ -18,7 +19,8 @@ torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
-RUN = "frame_dann"
+USE_SAMPLER = True
+RUN = "frame_dann_bilstm" + ("_sampler" if USE_SAMPLER else "")
 
 train_dataset = MultiDomainDataset("outputs/embeddings/frame/train", native_only = True)
 val_dataset = MultiDomainDataset("outputs/embeddings/frame/validation", native_only=True)
@@ -26,12 +28,18 @@ val_dataset = MultiDomainDataset("outputs/embeddings/frame/validation", native_o
 input_dims = MODEL_OUTPUT_DIM_FRAME
 
 #define the model
-model = AudioEmotionDANN()
+model = AudioEmotionDANN(bilstm=True, dann=True)
 
-trainer = TrainerDANN(model, lr=0.001, alpha=1.0, domain_weight=1.0)
+trainer = TrainerDANN(model, lr=0.001, alpha=0.3)
 
 #create DataLoaders for training and validation sets
-train_loader = DataLoader(train_dataset, batch_size= 32, shuffle = True, collate_fn=frame_multidomain_collate_fn)
+if USE_SAMPLER:
+    sampler = create_weighted_sampler(train_dataset.domains, train_dataset.labels)
+    train_loader = DataLoader(train_dataset, batch_size=32, sampler=sampler, collate_fn=frame_multidomain_collate_fn)
+else:
+    train_loader = DataLoader(train_dataset, batch_size= 32, shuffle = True, collate_fn=frame_multidomain_collate_fn)
+
+train_eval_loader = DataLoader(train_dataset, batch_size=32, shuffle=False, collate_fn=frame_multidomain_collate_fn)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, collate_fn=frame_multidomain_collate_fn)
 
 #train the model
@@ -45,14 +53,14 @@ results_output_dir = os.path.join("outputs/results", RUN)
 for d in (plots_output_dir, model_output_dir, results_output_dir):
     os.makedirs(d, exist_ok=True)
 
-save_loss_curve(history, title = "Loss curve with LSTM + DANN", filename=f"plots/{RUN}/loss_curve.png")
-save_accuracy_curve(history["train_acc"], history["val_acc"], title="Accuracy curve with LSTM + DANN", filename=f"plots/{RUN}/accuracy_curve.png")
-save_accuracy_curve(history["train_bal_acc"], history["val_bal_acc"], title="Balanced accuracy curve with LSTM + DANN", filename=f"plots/{RUN}/bal_accuracy_curve.png")
+save_loss_curve(history, title = "Loss curve with BiLSTM + DANN", filename=f"plots/{RUN}/loss_curve.png")
+save_accuracy_curve(history["train_acc"], history["val_acc"], title="Accuracy curve with BiLSTM + DANN", filename=f"plots/{RUN}/accuracy_curve.png")
+save_accuracy_curve(history["train_bal_acc"], history["val_bal_acc"], title="Balanced accuracy curve with BiLSTM + DANN", filename=f"plots/{RUN}/bal_accuracy_curve.png")
 
 torch.save(model.state_dict(), os.path.join(model_output_dir, "best_model.pt"))
 print(f"Model saved to {model_output_dir}")
 
-save_split_results(trainer, train_loader, "train", out_dir = results_output_dir) #save logits, labels, domains, loss of training set to a .pt file
+save_split_results(trainer, train_eval_loader, "train", out_dir = results_output_dir) #save logits, labels, domains, loss of training set to a .pt file
 save_split_results(trainer, val_loader, "validation", out_dir = results_output_dir) #save logits, labels, domains, loss of validation set to a .pt file
 
 torch.save(history, os.path.join(results_output_dir, "history.pt"))
