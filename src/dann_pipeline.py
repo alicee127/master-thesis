@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 
-from src.config import DEVICE, MODEL_OUTPUT_DIM_FRAME 
+from src.config import DEVICE, MODEL_OUTPUT_DIM_FRAME
 from src.classifier import Classifier
 from src.discriminator import Discriminator, GradientReversalLayer
 
@@ -25,6 +25,7 @@ class AudioEmotionDANN(nn.Module):
             "aves2": nn.Linear(self.input_dims["aves2"], self.shared_dim),
             "wav2vec": nn.Linear(self.input_dims["wav2vec"], self.shared_dim)
         })
+
 
         #shared LSTM component (change bidirectional to True for BiLSTM)
         self.shared_lstm = nn.LSTM(input_size=self.shared_dim, hidden_size=self.hidden_dim, batch_first=True, bidirectional=self.bilstm)

@@ -7,8 +7,7 @@ import pandas as pd
 import os
 import glob
 import numpy as np
-from datasets import load_dataset, get_dataset_split_names, concatenate_datasets, Audio
-from src.utils.caching import load_embeddings
+from datasets import load_dataset, concatenate_datasets, Audio
 from src.config import NATIVE_MODEL_BY_DOMAIN
 
 
@@ -93,7 +92,6 @@ class SpeechDataset(BaseDataset):
         super().__init__(target_sr)
     
     def load_data(self):
-        #splits = get_dataset_split_names("amu-cai/CAMEO")
         splits = ["crema_d", "cafe", "emozionalmente", "enterface", "oreau", "ravdess", "subesco"]
         all_splits = [load_dataset("amu-cai/CAMEO", split = s) for s in splits]
         combined = concatenate_datasets(all_splits)
@@ -122,7 +120,6 @@ class MusicDataset(BaseDataset):
 
     def __init__(self, target_sr = 24000):
         super().__init__(target_sr)
-        #check that MERT sampling rate is actually 24kHz
     
     def load_data(self):
         annotations = pd.read_csv("data/PMEmo2019/annotations/static_annotations.csv")
@@ -185,9 +182,7 @@ class AnimalVocDataset(BaseDataset):
         name_no_ext = os.path.splitext(filename)[0]  #name without extension
         animal_id, species, context, valence, call_id = name_no_ext.split("-")
 
-        return {
-            "animal_id": animal_id, "species": species, "context": context, "valence": valence, "call_id": call_id
-            }
+        return {"animal_id": animal_id, "species": species, "context": context, "valence": valence, "call_id": call_id}
     
 
 class SoundscapesDataset(BaseDataset):
@@ -258,12 +253,16 @@ class SoundscapesDataset(BaseDataset):
         return new_name
 
 
-
 class MultiDomainDataset(Dataset):
 
-    def __init__(self, embeddings_dir, model_filter=None, native_only=False):
+    def __init__(self, embeddings_dir, model_filter=None, native_only=False, w2v=False):
         self.domain_data = {}
         self.index_map = []
+
+        self.native_model = NATIVE_MODEL_BY_DOMAIN
+
+        if w2v:
+            self.native_model["soundscapes"] = "wav2vec"
 
         pt_files = glob.glob(os.path.join(embeddings_dir, "*.pt"))
 
@@ -272,7 +271,9 @@ class MultiDomainDataset(Dataset):
             name_no_ext, _ = os.path.splitext(filename)
             domain_name, model_name, _split_name = name_no_ext.split("_", 2)
 
-            if native_only and model_name != NATIVE_MODEL_BY_DOMAIN.get(domain_name):
+        
+
+            if native_only and model_name != self.native_model.get(domain_name):
                 continue
 
             if model_filter is not None and model_name != model_filter:
