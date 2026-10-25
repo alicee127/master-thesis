@@ -124,7 +124,10 @@ def compute_classification_reports(trainer, splits):
         domain_reports = {}
         for domain in np.unique(all_domains):
             idx = np.where(all_domains == domain)[0]
-            report = classification_report(labels_flat[idx].numpy(), preds[idx].numpy(), output_dict=True)
+            print(split_name, domain,
+                    "true:", np.unique(labels_flat[idx].numpy(), return_counts=True),
+                    "pred:", np.unique(preds[idx].numpy(), return_counts=True))
+            report = classification_report(labels_flat[idx].numpy(), preds[idx].numpy(), output_dict=True, zero_division=0)
             report["accuracy"] = accuracy_score(labels_flat[idx].numpy(), preds[idx].numpy())
             report["balanced_accuracy"] = balanced_accuracy_score(labels_flat[idx].numpy(), preds[idx].numpy())
 
@@ -149,16 +152,6 @@ def save_confusion_matrices(trainer, splits, output_dir = "plots/confusion_matri
         plt.show()
         plt.close()
 
-        '''for domain in np.unique(all_domains):
-            idx = np.where(all_domains == domain)[0]
-            cm = confusion_matrix(labels_flat[idx].numpy(), preds[idx].numpy(), normalize="true")
-            sns.heatmap(cm, fmt=".2f", annot=True, cmap="Blues")
-            plt.title(f"{split_name} {domain}")
-            plt.xlabel("Predicted")
-            plt.ylabel("True")
-            plt.savefig(os.path.join(filename, f"{split_name}_{domain}_cf_matrix.png"))
-            #plt.show()
-            plt.close()'''
 
 def build_summary_table(reports, split_name="test"):
     rows = []

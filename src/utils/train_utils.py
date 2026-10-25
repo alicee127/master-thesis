@@ -8,7 +8,6 @@ from sklearn.decomposition import PCA
 from src.datasets_classes import multidomain_collate_fn
 from src.classifier import Classifier
 from src.trainer import Trainer
-from src.projector import Projector
 
 def run_training(train_dataset, val_dataset, input_dims, shared_dim, hidden_dim, lr, dropout, max_epochs = 100, patience = 10, SEED = 42):
 
