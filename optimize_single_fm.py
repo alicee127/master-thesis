@@ -38,7 +38,7 @@ def objective(trial):
     lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
     dropout = trial.suggest_float("dropout", 0.0, 0.5)
 
-    trainer, train_loader, val_loader, history = run_training_no_pca(train_dataset, val_dataset,
+    trainer, train_loader, train_eval_loader, val_loader, history = run_training_no_pca(train_dataset, val_dataset,
                                                 shared_dim=shared_dim, hidden_dim=hidden_dim, lr=lr, dropout=dropout,
                                                 max_epochs = 100, patience = 10, SEED = SEED)
 

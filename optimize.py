@@ -4,6 +4,7 @@ import numpy as np
 import random
 import json
 import os
+import argparse
 
 from src.datasets_classes import MultiDomainDataset
 from src.utils.train_utils import run_training
@@ -17,7 +18,10 @@ torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
-RUN = "_w2v"
+parser = argparse.ArgumentParser()
+parser.add_argument("--run", default="", choices=["", "_w2v"])
+args = parser.parse_args()
+RUN = args.run
 
 if RUN == "_w2v":
 
@@ -48,7 +52,7 @@ def objective(trial):
     dropout = trial.suggest_float("dropout", 0.0, 0.5)
 
 
-    trainer, _, val_loader, _, _ = run_training(train_dataset, val_dataset, input_dims=domain_dims,
+    trainer, _, _, val_loader, _, _ = run_training(train_dataset, val_dataset, input_dims=domain_dims,
                                                 shared_dim=shared_dim, hidden_dim=hidden_dim, lr=lr, dropout=dropout,
                                                 max_epochs = 100, patience = 10, SEED = SEED)
 
