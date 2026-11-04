@@ -8,7 +8,7 @@ import argparse
 
 from src.datasets_classes import MultiDomainDataset
 from src.utils.train_utils import run_training
-from src.utils.evaluation import compute_domain_balanced_accuracies
+from src.utils.optim_utils import compute_domain_balanced_accuracies
 from src.config import MODEL_OUTPUT_DIM, MODEL_OUTPUT_DIM_FRAME, NATIVE_MODEL_BY_DOMAIN
 
 SEED = 42
