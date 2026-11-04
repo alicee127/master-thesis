@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm.auto import tqdm
 import copy
 import os
@@ -18,7 +19,7 @@ class TrainerLSTM:
         self.criterion = nn.BCEWithLogitsLoss()
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr)
-        #self.scheduler = ReduceLROnPlateau(self.optimizer, "min")
+        self.scheduler = ReduceLROnPlateau(self.optimizer, "min")
 
     def _run_epoch(self, data_loader, train: bool):
 
@@ -120,7 +121,7 @@ class TrainerLSTM:
                 epoch_iterator.close()
                 break
 
-            #self.scheduler.step(val_loss)
+            self.scheduler.step(val_loss)
 
         if best_state is not None:
             self.model.load_state_dict(best_state)

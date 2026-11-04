@@ -30,7 +30,7 @@ class Trainer:
         self.scheduler = ReduceLROnPlateau(self.optimizer, "min")
 
 
-    def create_weighted_sampler(self, domains, labels, alpha = 0.5):
+    """def create_weighted_sampler(self, domains, labels, alpha = 0.5):
         combos = [f"{d}_{l.item() if isinstance(l, torch.Tensor) else l}" for d, l in zip(domains,labels)]
 
         unique_combos, counts = np.unique(combos, return_counts=True)
@@ -40,7 +40,7 @@ class Trainer:
 
         sampler = WeightedRandomSampler(weights=torch.DoubleTensor(sample_weights), num_samples=len(sample_weights), replacement=True)
 
-        return sampler
+        return sampler"""
 
 
     def _forward_batch(self, embeddings: list, domains: list):
