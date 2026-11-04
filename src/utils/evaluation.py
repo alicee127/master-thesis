@@ -1,79 +1,155 @@
 import os
-import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
-from sklearn.metrics import balanced_accuracy_score, classification_report, accuracy_score, confusion_matrix
+import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, precision_recall_fscore_support, confusion_matrix
 
+CLASS_NAMES = ["negative", "positive"]
 OUT_DIR = "outputs"
-os.makedirs(OUT_DIR, exist_ok=True)
+CMAP = "Purples"
 
-def _get_preds_domains(trainer, loader):
-    """
-    Helper function to extract predicted labels for each domain individually
+# GET PREDICTIONS
 
-    trainer: Trainer object or None if frame-level experiment
-    loader: DataLoader object for utterance-level, path of .pt files with results for frame-level
-    """
-    if trainer is None: #frame-level
-        data = torch.load(loader, map_location="cpu")
-        logits = data["logits"]
-        labels = data["labels"]
-        all_domains = np.array(data["domains"])
+def _to_df(logits, labels, domains):
+    prob = torch.sigmoid(logits.reshape(-1)).numpy()
+    df = pd.DataFrame({
+        "domain": np.asarray(domains),
+        "y_true": labels.long().reshape(-1).numpy(),
+        "prob": prob,
+        "y_pred": (prob > 0.5).astype(int)
+    })
 
-    else: #utterance-level
-        _, logits, labels = trainer.evaluate(loader)
-
-        all_domains = []
-
-        for _, _, domains in loader:
-            all_domains.extend(domains)
-        all_domains = np.array(all_domains)
-
-    preds = (torch.sigmoid(logits) > 0.5).long().reshape(-1)
-    labels_flat = labels.long().reshape(-1)
-
-    return preds, labels_flat, all_domains
-
-
-def compute_domain_accuracies(trainer, train_loader, val_loader):
-    domain_accuracies = {}
-
-    for split_name, loader in [("train", train_loader), ("val", val_loader)]:
-        preds, labels_flat, all_domains = _get_preds_domains(trainer, loader)
-
-        for domain in np.unique(all_domains):
-            idx = np.where(all_domains == domain)[0]
-            acc = (preds[idx] == labels_flat[idx]).float().mean().item()
-            domain_accuracies.setdefault(domain, {})[split_name] = acc
-
-    return domain_accuracies
-
-
-def compute_domain_balanced_accuracies(trainer, loader):
-    domain_bal_accuracies = {}
-
-    preds, labels_flat, all_domains = _get_preds_domains(trainer, loader)
-
-    for domain in np.unique(all_domains):
-        idx = np.where(all_domains == domain)[0]
-        bal_acc = balanced_accuracy_score(labels_flat[idx].numpy(), preds[idx].numpy())
-        domain_bal_accuracies[domain] = bal_acc
-
-    return domain_bal_accuracies
-
-
-def save_accuracy_table(domain_accuracies, filename="tables/accuracy_table.csv"):
-    rows = []
-    for domain, acc in domain_accuracies.items():
-        rows.append({"domain": domain, "train_acc": acc["train"], "val_acc": acc["val"]})
-    df = pd.DataFrame(rows)
-    path = os.path.join(OUT_DIR, filename)
-    df.to_csv(path, index=False)
-    print(f"Saved accuracy table -> {path}")
     return df
 
+def predictions_from_file(path):
+    d = torch.load(path, map_location="cpu") #weights_only = True ??
+    df = _to_df(d["logits"], d["labels"], d["domains"])
+    return df
+
+
+# COMPUTE METRICS
+
+def compute_metrics(df):
+    prec, rec, f1, _ = precision_recall_fscore_support(df["y_true"], df["y_pred"], average="macro", zero_division=0)
+    acc = accuracy_score(df["y_true"], df["y_pred"])
+    metrics_dict = {
+        "n": len(df),
+        "accuracy": acc,
+        "precision": prec,
+        "recall": rec,
+        "f1": f1
+    }
+    return metrics_dict
+
+def metrics_table(df):
+    rows = {dom: compute_metrics(g) for dom, g in df.groupby("domain")}
+    table = pd.DataFrame.from_dict(rows, orient="index")
+
+    metric_cols = ["accuracy", "precision", "recall", "f1"]
+    mean_row = table[metric_cols].mean()
+    mean_row["n"] = table["n"].sum()
+    table.loc["domain average"] = mean_row
+    table.loc["overall"] = pd.Series(compute_metrics(df))
+    table["n"] = table["n"].astype(int)
+    return table[["n"] + metric_cols]
+
+def selection_score(df):
+    #mean of bal. acc. over domains, used as a metric to choose the best model configurations on validation set
+    bal_acc_mean = np.mean([balanced_accuracy_score(g["y_true"], g["y_pred"]) for _, g in df.groupby("domain")])
+    return bal_acc_mean
+
+def plot_confusion_grid(df, title = None, path = None, show = True):
+    domains = sorted(df["domain"].unique())
+    n_cols = 2
+    n_rows = int(np.ceil(len(domains) / n_cols))
+    
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 4*n_rows), squeeze=False)
+    axes = axes.reshape(-1)
+
+    for ax, dom in zip(axes, domains):
+        g = df[df["domain"] == dom]
+
+        cm = confusion_matrix(g["y_true"], g["y_pred"], labels = [0, 1], normalize="true")
+        sns.heatmap(cm, annot=True, fmt=".2f", cmap = CMAP, vmin=0, vmax=1, cbar=False, xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES, ax=ax)
+        ax.set_title(f"{dom} (n={len(g)})")
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("True")
+
+    for ax in axes[len(domains):]:
+        ax.axis("off")
+
+    if title:
+        fig.suptitle(title)
+    fig.tight_layout()
+
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fig.savefig(path, bbox_inches="tight", dpi=150)
+
+    if show:
+        plt.show()
+    plt.close(fig)
+
+
+def plot_overall_confusion_grid(dfs, n_cols=5, path=None, show=True):
+    names = list(dfs)
+    n_rows = int(np.ceil(len(names) / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(3.5 * n_cols, 3.5 * n_rows), squeeze=False)
+    axes = axes.reshape(-1)
+
+    for ax, name in zip(axes, names):
+        df = dfs[name]
+        cm = confusion_matrix(df["y_true"], df["y_pred"], labels=[0, 1], normalize="true")
+        sns.heatmap(cm, annot=True, fmt=".2f", cmap=CMAP, vmin=0, vmax=1, cbar=False, square=True,
+                    xticklabels=CLASS_NAMES, yticklabels=CLASS_NAMES, ax=ax)
+        ax.set_title(name, fontsize=10)
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("True")
+
+    for ax in axes[len(names):]:
+        ax.axis("off")
+
+    fig.tight_layout()
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fig.savefig(path, bbox_inches="tight", dpi=150)
+    if show:
+        plt.show()
+    plt.close(fig)
+    
+
+def plot_domain_comparison(metrics_by_approach, metric="recall", path=None, show=True):
+    #per-domain bar plot with multiple approaches
+    df = pd.DataFrame({k: v[metric] for k, v in metrics_by_approach.items()})
+    #df = df.drop(index="overall")
+
+    ax = df.plot(kind="bar", figsize=(10, 5), width=0.8, colormap="tab20b")
+    ax.set_ylabel("Balanced accuracy" if metric=="recall" else metric)
+    ax.set_ylim(0, 1.05)
+    ax.set_xlabel("")
+    ax.legend(title=None, loc="lower right")
+    for c in ax.containers:
+        ax.bar_label(c, fmt="%.2f", fontsize=6, padding=2)
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        plt.savefig(path, bbox_inches="tight", dpi=150)
+
+    if show:
+        plt.show()
+    plt.close()
+
+def save_metrics(df, out_dir, name):
+    os.makedirs(out_dir, exist_ok=True)
+    metrics_table(df).to_csv(os.path.join(out_dir, f"{name}_metrics.csv"))
+
+
+
+# PLOTS FOR TRAINING (loss and accuracy curves)
 
 def save_loss_curve(history, title, filename):
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -106,107 +182,5 @@ def save_accuracy_curve(variable_train, variable_val, title="Train vs Val Accura
     print(f"Saved accuracy curve -> {path}")
     return fig
 
-def compute_classification_reports(trainer, splits):
-    """
-    splits: list of (split_name, loader) tuples
-    
-    """
-
-    results = {}
-
-    for split_name, loader in splits:
-        preds, labels_flat, all_domains = _get_preds_domains(trainer, loader)
-
-        overall_report = classification_report(labels_flat.numpy(), preds.numpy(), output_dict=True)
-        overall_report["accuracy"] = accuracy_score(labels_flat.numpy(), preds.numpy())
-        overall_report["balanced_accuracy"] = balanced_accuracy_score(labels_flat.numpy(), preds.numpy())
-
-        domain_reports = {}
-        for domain in np.unique(all_domains):
-            idx = np.where(all_domains == domain)[0]
-            print(split_name, domain,
-                    "true:", np.unique(labels_flat[idx].numpy(), return_counts=True),
-                    "pred:", np.unique(preds[idx].numpy(), return_counts=True))
-            report = classification_report(labels_flat[idx].numpy(), preds[idx].numpy(), output_dict=True, zero_division=0)
-            report["accuracy"] = accuracy_score(labels_flat[idx].numpy(), preds[idx].numpy())
-            report["balanced_accuracy"] = balanced_accuracy_score(labels_flat[idx].numpy(), preds[idx].numpy())
-
-            domain_reports[domain] = report
-
-        results[split_name] = {"overall": overall_report, "domains": domain_reports}
-    return results
-
-def save_confusion_matrices(trainer, splits, output_dir = "plots/confusion_matrices"):
-    filename = os.path.join(OUT_DIR, output_dir)
-    os.makedirs(filename, exist_ok=True)
-
-    for split_name, loader in splits:
-        preds, labels_flat, all_domains = _get_preds_domains(trainer, loader)
-
-        cm = confusion_matrix(labels_flat.numpy(), preds.numpy(), normalize="true")
-        sns.heatmap(cm, fmt=".2f", annot=True, cmap="Blues")
-        plt.title(f"{split_name}")
-        plt.xlabel("Predicted")
-        plt.ylabel("True")
-        plt.savefig(os.path.join(filename, f"{split_name}_cf_matrix.png"))
-        plt.show()
-        plt.close()
 
 
-def build_summary_table(reports, split_name="test"):
-    rows = []
-    for domain, report in reports[split_name]["domains"].items():
-        rows.append({
-            "domain": domain,
-            "accuracy": report["accuracy"],
-            "balanced_accuracy": report["balanced_accuracy"],
-            "precision_macro": report["macro avg"]["precision"],
-            "recall_macro": report["macro avg"]["recall"],
-            "f1_macro": report["macro avg"]["f1-score"],
-        })
-    df = pd.DataFrame(rows).set_index("domain")
-    return df
-
-def plot_domain_metric_bar(reports, split_name="test", metric="balanced_accuracy", filename="plots/domain_summary_bar.png"):
-    domains = list(reports[split_name]["domains"].keys())
-    values = [reports[split_name]["domains"][d][metric] for d in domains]
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(domains, values, color=sns.color_palette("pastel", len(domains)))
-    ax.set_ylabel(metric.replace("_", " ").title())
-    ax.set_ylim(0, 1)
-    ax.set_title(f"{split_name} — {metric.replace('_', ' ')} by domain")
-    for i, v in enumerate(values):
-        ax.text(i, v + 0.02, f"{v:.2f}", ha="center")
-
-    path = os.path.join(OUT_DIR, filename)
-    fig.savefig(path, bbox_inches="tight", dpi=150)
-    plt.show()
-    plt.close(fig)
-
-def save_combined_confusion_matrix(trainer, loader, split_name, output_dir="plots/confusion_matrices"):
-    preds, labels_flat, all_domains = _get_preds_domains(trainer, loader)
-    domains = np.unique(all_domains)
-
-    n = len(domains)
-    n_cols = 2
-    n_rows = int(np.ceil(n / n_cols))
-
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
-    axes = np.array(axes).reshape(-1)
-
-    for ax, domain in zip(axes, domains):
-        idx = np.where(all_domains == domain)[0]
-        cm = confusion_matrix(labels_flat[idx].numpy(), preds[idx].numpy(), normalize="true")
-        sns.heatmap(cm, fmt=".2f", annot=True, cmap="Blues", ax=ax, cbar=False)
-        ax.set_title(domain)
-        ax.set_xlabel("Predicted")
-        ax.set_ylabel("True")
-
-    fig.suptitle(f"{split_name} — confusion matrices by domain")
-    fig.tight_layout()
-
-    path = os.path.join(OUT_DIR, output_dir, f"{split_name}_combined_cf_matrix.png")
-    fig.savefig(path, bbox_inches="tight", dpi=150)
-    plt.show()
-    plt.close(fig)
