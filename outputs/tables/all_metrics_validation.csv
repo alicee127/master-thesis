@@ -1,0 +1,145 @@
+run,domain,n,accuracy,precision,recall,f1
+frame\bilstm,animal,315,0.746,0.6893,0.7451,0.6986
+frame\bilstm,music,77,0.7922,0.7298,0.7298,0.7298
+frame\bilstm,soundscapes,122,0.7869,0.8298,0.7869,0.7797
+frame\bilstm,speech,1957,0.9642,0.9485,0.942,0.9452
+frame\bilstm,domain average,2471,0.8223,0.7994,0.8009,0.7883
+frame\bilstm,overall,2471,0.9223,0.8865,0.91,0.8973
+frame\bilstm_dann_a0.1,animal,315,0.7968,0.731,0.6238,0.6424
+frame\bilstm_dann_a0.1,music,77,0.7792,0.7304,0.6237,0.6389
+frame\bilstm_dann_a0.1,soundscapes,122,0.7787,0.8162,0.7787,0.7719
+frame\bilstm_dann_a0.1,speech,1957,0.9601,0.951,0.9258,0.9377
+frame\bilstm_dann_a0.1,domain average,2471,0.8287,0.8071,0.738,0.7477
+frame\bilstm_dann_a0.1,overall,2471,0.9247,0.9046,0.8866,0.8951
+frame\bilstm_dann_a0.2,animal,315,0.7238,0.6741,0.7305,0.6787
+frame\bilstm_dann_a0.2,music,77,0.7403,0.6814,0.711,0.69
+frame\bilstm_dann_a0.2,soundscapes,122,0.7541,0.7585,0.7541,0.753
+frame\bilstm_dann_a0.2,speech,1957,0.9622,0.9418,0.9434,0.9426
+frame\bilstm_dann_a0.2,domain average,2471,0.7951,0.764,0.7848,0.7661
+frame\bilstm_dann_a0.2,overall,2471,0.9146,0.8769,0.8987,0.887
+frame\bilstm_dann_a0.3,animal,315,0.7524,0.6918,0.7445,0.7025
+frame\bilstm_dann_a0.3,music,77,0.7532,0.6993,0.736,0.7091
+frame\bilstm_dann_a0.3,soundscapes,122,0.7705,0.778,0.7705,0.7689
+frame\bilstm_dann_a0.3,speech,1957,0.9627,0.953,0.9319,0.9419
+frame\bilstm_dann_a0.3,domain average,2471,0.8097,0.7805,0.7957,0.7806
+frame\bilstm_dann_a0.3,overall,2471,0.9199,0.8884,0.8953,0.8918
+frame\bilstm_dann_a0.5,animal,315,0.7651,0.6529,0.5983,0.6091
+frame\bilstm_dann_a0.5,music,77,0.8052,0.7527,0.7061,0.7227
+frame\bilstm_dann_a0.5,soundscapes,122,0.7541,0.7585,0.7541,0.753
+frame\bilstm_dann_a0.5,speech,1957,0.9596,0.9332,0.9463,0.9395
+frame\bilstm_dann_a0.5,domain average,2471,0.821,0.7743,0.7512,0.7561
+frame\bilstm_dann_a0.5,overall,2471,0.9199,0.8911,0.8902,0.8907
+frame\bilstm_dann_a0.75,animal,315,0.7778,0.681,0.6019,0.6145
+frame\bilstm_dann_a0.75,music,77,0.7403,0.6814,0.711,0.69
+frame\bilstm_dann_a0.75,soundscapes,122,0.6967,0.6993,0.6967,0.6957
+frame\bilstm_dann_a0.75,speech,1957,0.9607,0.9607,0.9179,0.9373
+frame\bilstm_dann_a0.75,domain average,2471,0.7939,0.7556,0.7319,0.7344
+frame\bilstm_dann_a0.75,overall,2471,0.9174,0.9093,0.859,0.8804
+frame\bilstm_dann_a1.0,animal,315,0.7651,0.669,0.6592,0.6636
+frame\bilstm_dann_a1.0,music,77,0.5714,0.5874,0.6132,0.5521
+frame\bilstm_dann_a1.0,soundscapes,122,0.7459,0.7476,0.7459,0.7455
+frame\bilstm_dann_a1.0,speech,1957,0.9591,0.9287,0.9515,0.9395
+frame\bilstm_dann_a1.0,domain average,2471,0.7604,0.7332,0.7424,0.7252
+frame\bilstm_dann_a1.0,overall,2471,0.9118,0.8786,0.882,0.8803
+frame\bilstm_dann_a1.0_sampler,animal,315,0.746,0.6763,0.717,0.6868
+frame\bilstm_dann_a1.0_sampler,music,77,0.7273,0.6488,0.6535,0.651
+frame\bilstm_dann_a1.0_sampler,soundscapes,122,0.7377,0.7377,0.7377,0.7377
+frame\bilstm_dann_a1.0_sampler,speech,1957,0.9356,0.8847,0.9439,0.9094
+frame\bilstm_dann_a1.0_sampler,domain average,2471,0.7867,0.7369,0.763,0.7462
+frame\bilstm_dann_a1.0_sampler,overall,2471,0.8952,0.8482,0.8916,0.8659
+frame\bilstm_sampler,animal,315,0.6127,0.6661,0.7235,0.6005
+frame\bilstm_sampler,music,77,0.7662,0.7048,0.7285,0.7136
+frame\bilstm_sampler,soundscapes,122,0.7295,0.7326,0.7295,0.7286
+frame\bilstm_sampler,speech,1957,0.9458,0.9018,0.9486,0.9223
+frame\bilstm_sampler,domain average,2471,0.7636,0.7513,0.7825,0.7413
+frame\bilstm_sampler,overall,2471,0.8871,0.8378,0.8942,0.8588
+frame\lstm,animal,315,0.7746,0.6738,0.5858,0.5943
+frame\lstm,music,77,0.7532,0.6675,0.5899,0.5964
+frame\lstm,soundscapes,122,0.7623,0.7624,0.7623,0.7623
+frame\lstm,speech,1957,0.9627,0.9489,0.9365,0.9425
+frame\lstm,domain average,2471,0.8132,0.7631,0.7186,0.7239
+frame\lstm,overall,2471,0.9223,0.9029,0.881,0.8912
+frame\lstm_dann_a0.1,animal,315,0.7937,0.7171,0.631,0.6495
+frame\lstm_dann_a0.1,music,77,0.7792,0.7197,0.6399,0.6567
+frame\lstm_dann_a0.1,soundscapes,122,0.7459,0.746,0.7459,0.7459
+frame\lstm_dann_a0.1,speech,1957,0.9627,0.9443,0.9419,0.9431
+frame\lstm_dann_a0.1,domain average,2471,0.8204,0.7818,0.7397,0.7488
+frame\lstm_dann_a0.1,overall,2471,0.9247,0.903,0.8889,0.8956
+frame\lstm_dann_a0.2,animal,315,0.7556,0.6942,0.7466,0.7054
+frame\lstm_dann_a0.2,music,77,0.7532,0.677,0.6711,0.6738
+frame\lstm_dann_a0.2,soundscapes,122,0.7459,0.746,0.7459,0.7459
+frame\lstm_dann_a0.2,speech,1957,0.9612,0.9477,0.9328,0.94
+frame\lstm_dann_a0.2,domain average,2471,0.804,0.7662,0.7741,0.7663
+frame\lstm_dann_a0.2,overall,2471,0.9178,0.885,0.894,0.8893
+frame\lstm_dann_a0.3,animal,315,0.7778,0.6815,0.5973,0.6089
+frame\lstm_dann_a0.3,music,77,0.8182,0.8104,0.6825,0.7102
+frame\lstm_dann_a0.3,soundscapes,122,0.6967,0.7033,0.6967,0.6942
+frame\lstm_dann_a0.3,speech,1957,0.9642,0.9493,0.9411,0.9451
+frame\lstm_dann_a0.3,domain average,2471,0.8142,0.7862,0.7294,0.7396
+frame\lstm_dann_a0.3,overall,2471,0.9227,0.9046,0.8801,0.8914
+frame\lstm_dann_a0.5,animal,315,0.781,0.6956,0.5853,0.5932
+frame\lstm_dann_a0.5,music,77,0.7273,0.642,0.6373,0.6395
+frame\lstm_dann_a0.5,soundscapes,122,0.6557,0.6573,0.6557,0.6549
+frame\lstm_dann_a0.5,speech,1957,0.9607,0.9412,0.9388,0.94
+frame\lstm_dann_a0.5,domain average,2471,0.7812,0.734,0.7043,0.7069
+frame\lstm_dann_a0.5,overall,2471,0.9154,0.8949,0.8691,0.8809
+frame\lstm_dann_a0.75,animal,315,0.746,0.6144,0.5765,0.5829
+frame\lstm_dann_a0.75,music,77,0.7532,0.6868,0.7035,0.6935
+frame\lstm_dann_a0.75,soundscapes,122,0.582,0.6386,0.582,0.5344
+frame\lstm_dann_a0.75,speech,1957,0.9632,0.9542,0.9322,0.9427
+frame\lstm_dann_a0.75,domain average,2471,0.7611,0.7235,0.6986,0.6884
+frame\lstm_dann_a0.75,overall,2471,0.9102,0.8974,0.8497,0.87
+frame\lstm_dann_a1.0,animal,315,0.7556,0.6508,0.6342,0.6409
+frame\lstm_dann_a1.0,music,77,0.7143,0.6695,0.7096,0.6742
+frame\lstm_dann_a1.0,soundscapes,122,0.7213,0.7235,0.7213,0.7206
+frame\lstm_dann_a1.0,speech,1957,0.9637,0.9537,0.9344,0.9436
+frame\lstm_dann_a1.0,domain average,2471,0.7887,0.7494,0.7499,0.7448
+frame\lstm_dann_a1.0,overall,2471,0.9174,0.8942,0.8767,0.885
+frame\lstm_dann_a1.0_sampler,animal,315,0.6635,0.6387,0.6911,0.6266
+frame\lstm_dann_a1.0_sampler,music,77,0.7532,0.677,0.6711,0.6738
+frame\lstm_dann_a1.0_sampler,soundscapes,122,0.7787,0.7806,0.7787,0.7783
+frame\lstm_dann_a1.0_sampler,speech,1957,0.9576,0.9307,0.9423,0.9364
+frame\lstm_dann_a1.0_sampler,domain average,2471,0.7883,0.7568,0.7708,0.7538
+frame\lstm_dann_a1.0_sampler,overall,2471,0.9049,0.8616,0.8957,0.8764
+frame\lstm_sampler,animal,315,0.673,0.6689,0.7348,0.6467
+frame\lstm_sampler,music,77,0.7273,0.6558,0.6697,0.6612
+frame\lstm_sampler,soundscapes,122,0.7295,0.7346,0.7295,0.728
+frame\lstm_sampler,speech,1957,0.9453,0.9016,0.9464,0.9214
+frame\lstm_sampler,domain average,2471,0.7688,0.7402,0.7701,0.7393
+frame\lstm_sampler,overall,2471,0.8932,0.8454,0.8925,0.8642
+utterance,animal,315,0.7968,0.7338,0.7876,0.7494
+utterance,music,77,0.7532,0.7146,0.7684,0.7215
+utterance,soundscapes,122,0.6967,0.6993,0.6967,0.6957
+utterance,speech,1957,0.9586,0.9293,0.9484,0.9385
+utterance,domain average,2471,0.8014,0.7693,0.8003,0.7763
+utterance,overall,2471,0.9187,0.8823,0.9037,0.8922
+utterance_single\aves2,animal,315,0.727,0.6412,0.6624,0.6483
+utterance_single\aves2,music,77,0.8442,0.7955,0.8136,0.8036
+utterance_single\aves2,soundscapes,122,0.7459,0.7492,0.7459,0.7451
+utterance_single\aves2,speech,1957,0.7941,0.6903,0.7001,0.6948
+utterance_single\aves2,domain average,2471,0.7778,0.719,0.7305,0.7229
+utterance_single\aves2,overall,2471,0.7847,0.7086,0.7174,0.7127
+utterance_single\clap,animal,315,0.6698,0.6608,0.7234,0.6412
+utterance_single\clap,music,77,0.8701,0.8273,0.8474,0.8363
+utterance_single\clap,soundscapes,122,0.7787,0.7794,0.7787,0.7786
+utterance_single\clap,speech,1957,0.7522,0.6677,0.7209,0.6799
+utterance_single\clap,domain average,2471,0.7677,0.7338,0.7676,0.734
+utterance_single\clap,overall,2471,0.7467,0.6896,0.7384,0.6993
+utterance_single\e2v,animal,315,0.5746,0.5122,0.516,0.501
+utterance_single\e2v,music,77,0.4805,0.4899,0.4868,0.4539
+utterance_single\e2v,soundscapes,122,0.6393,0.6399,0.6393,0.639
+utterance_single\e2v,speech,1957,0.9581,0.937,0.9354,0.9362
+utterance_single\e2v,domain average,2471,0.6631,0.6447,0.6444,0.6325
+utterance_single\e2v,overall,2471,0.8786,0.8328,0.8402,0.8364
+utterance_single\mert,animal,315,0.5333,0.5359,0.5499,0.4994
+utterance_single\mert,music,77,0.8831,0.8452,0.8561,0.8504
+utterance_single\mert,soundscapes,122,0.8197,0.8211,0.8197,0.8195
+utterance_single\mert,speech,1957,0.7859,0.6762,0.6804,0.6782
+utterance_single\mert,domain average,2471,0.7555,0.7196,0.7265,0.7119
+utterance_single\mert,overall,2471,0.7584,0.6796,0.6972,0.6867
+utterance_w2v,animal,315,0.7841,0.7246,0.784,0.739
+utterance_w2v,music,77,0.6753,0.6785,0.732,0.6566
+utterance_w2v,soundscapes,122,0.7295,0.7296,0.7295,0.7295
+utterance_w2v,speech,1957,0.9601,0.933,0.9485,0.9405
+utterance_w2v,domain average,2471,0.7873,0.7664,0.7985,0.7664
+utterance_w2v,overall,2471,0.9174,0.8825,0.8977,0.8897
